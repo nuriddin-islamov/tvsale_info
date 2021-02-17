@@ -1,4 +1,3 @@
-from functions import *
 from telegram import *
 from telegram.ext import *
 
