@@ -9,6 +9,8 @@ import time
 import logging
 import random
 import sqlite3
+from id1.client_id1 import *
+
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
@@ -16,7 +18,8 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-STATE_SIGNUP, STATE_USER, STATE_CLIENTS, STATE_FEEDBACK, STATE_ABOUT, STATE_PROMO = range(6)
+STATE_SIGNUP, STATE_USER, STATE_CLIENTS, STATE_FEEDBACK, STATE_ABOUT, STATE_PROMO, \
+    STATE_ID1, STATE_ID1_CONTACT, STATE_ID1_ORDER = range(9)
 
 conn = sqlite3.connect(database_path, check_same_thread=False)
 cursor = conn.cursor()
@@ -40,24 +43,61 @@ button_back = ReplyKeyboardMarkup([
 ], resize_keyboard=True)
 
 
+# def logs(update):
+#     chat_id = update.message.chat_id
+#     logger.info()
+#     f = open('logs.txt', 'a')
+#     f.write(f'User')
+
+
+# Save logs into logs.txt file
+def logs(update, message):
+    telegram_id = update.message.chat_id
+    f = open('logs.txt', 'a')
+    f.write(f'''{time.asctime()} - {telegram_id} - {message} \n''')
+    f.close()
+
+
+# Select name of any user from database
+def name_of_user(update):
+    telegram_id = update.message.chat_id
+    name = cursor.execute("""
+    SELECT name 
+    FROM Users 
+    WHERE telegram_id = '{}'
+    """.format(telegram_id)).fetchone()
+    return name[0]
+
+
+# Select phone number of any user from database
+def phone_of_user(update):
+    telegram_id = update.message.chat_id
+    phone = cursor.execute("""
+    SELECT phone_number
+    FROM Users
+    WHERE telegram_id = '{}'
+    """.format(telegram_id)).fetchone()
+    return phone
+
+
 # Greet the new user. Pass to the step of registration.
 def start(update, context):
-    try:
-        user = update.message.from_user
-        telegram_id = update.message.chat_id
-        update.message.reply_html(greeting_message)
-        db_id = cursor.execute("""SELECT ID FROM Users WHERE telegram_id = '{}'""".format(telegram_id)).fetchall()
-        if len(db_id) == 0:
-            logger.info("New user started the bot. Username: %s and F_Name: %s, L_Name: %s", user.username,
-                        user.first_name, user.last_name)
-            update.message.reply_html(user_name)
-            return STATE_SIGNUP
-        else:
-            logger.info('User %s continued using bot.', telegram_id)
-            main_menu(update, context)
-            return STATE_USER
-    except TimeoutError:
-        update.message.reply_html(error_message)
+    user = update.message.from_user
+    telegram_id = update.message.chat_id
+    update.message.reply_html(greeting_message)
+    db_id = cursor.execute("""SELECT ID FROM Users WHERE telegram_id = '{}'""".format(telegram_id)).fetchall()
+
+    if len(db_id) == 0:
+        logger.info("New user started the bot. Username: %s and F_Name: %s, L_Name: %s", user.username,
+                    user.first_name, user.last_name)
+        logs(update, f'New user started the bot. Username: {user.username}')
+        update.message.reply_html(user_name)
+        return STATE_SIGNUP
+    else:
+        logger.info('User %s continued using bot.', telegram_id)
+        logs(update, f'User continued using bot')
+        main_menu(update, context)
+        return STATE_USER
 
 
 def register(update, context):
@@ -72,6 +112,8 @@ def register(update, context):
     INSERT INTO Users VALUES (NULL, '{}', '{}', '{}', 0, '{}')
     """.format(telegram_id, users_input, username, unique_code))
     conn.commit()
+    logs(update, f"Registration started for {users_input} ({telegram_id})")
+    logger.info("Registration started for %s (%s)", users_input, telegram_id)
     button = [[KeyboardButton(phone_send_btn, request_contact=True)]]
     reply_markup = ReplyKeyboardMarkup(button, resize_keyboard=True, one_time_keyboard=True)
     update.message.reply_html(request_phone, reply_markup=reply_markup)
@@ -90,25 +132,35 @@ def reg_complete(update, context):
     conn.commit()
     update.message.reply_html(registration_complete_msg)
     main_menu(update, context)
+    logs(update, f'has been added to database. Phone: {phone}')
     logger.info("User %s has been added to database. Phone number: %s", telegram_id, phone)
     return STATE_USER
 
 
 def main_menu(update, context):
     update.message.reply_html(main_menu_text, reply_markup=main_buttons)
+    telegram_id = update.message.chat_id
+    logs(update, f"main menu opened by {name_of_user(update)}")
+    logger.info("%s main menu opened by %s", telegram_id, name_of_user(update))
     return STATE_USER
 
 
 def clients(update, context):
     update.message.reply_html(clients_choose_text, reply_markup=client_buttons)
+    telegram_id = update.message.chat_id
+    logs(update, f"clients menu opened by {name_of_user(update)}")
+    logger.info("%s clients menu opened by %s", telegram_id, name_of_user(update))
     return STATE_CLIENTS
 
 
 def id_1(update, context):
-    update.message.reply_photo(lactovita_pic, caption='''<b>«Lactovita» шифобахш маҳсулоти</b>
-
-☎️ Телефон рақамлар:
-• 71-230-80-07''', parse_mode='HTML')
+    chat_id = update.message.chat_id
+    update.message.reply_photo(lactovita_pic, caption='''<b>«Lactovita» шифобахш маҳсулоти</b>''',
+                               parse_mode='HTML', reply_markup=buttons_id1)
+    telegram_id = update.message.chat_id
+    logs(update, f"id_1 menu opened")
+    logger.info("%s id_1 menu opened", telegram_id)
+    return STATE_ID1
 
 
 def id_2(update, context):
@@ -116,6 +168,9 @@ def id_2(update, context):
 
 ☎️ Телефон рақамлар:
 • 70-983-28-83''', parse_mode='HTML')
+    telegram_id = update.message.chat_id
+    logs(update, f"id_2 pressed")
+    logger.info("%s id_2 pressed", telegram_id)
 
 
 def id_3(update, context):
@@ -124,6 +179,9 @@ def id_3(update, context):
 ☎️ Телефон рақамлар:
 • 97-241-03-03
 • 97-249-03-03''', parse_mode='HTML')
+    telegram_id = update.message.chat_id
+    logs(update, f"id_3 pressed")
+    logger.info("%s id_3 pressed", telegram_id)
 
 
 def id_4(update, context):
@@ -131,11 +189,25 @@ def id_4(update, context):
 
 ☎️ Телефон рақамлар:
 • 71-200-48-88''', parse_mode='HTML')
+    telegram_id = update.message.chat_id
+    logs(update, f"id_4 pressed")
+    logger.info("%s id_4 pressed", telegram_id)
 
 
 def back_to_menu(update, context):
+    telegram_id = update.message.chat_id
     main_menu(update, context)
+    logs(update, f"back to main menu")
+    logger.info("%s back to main menu", telegram_id)
     return STATE_USER
+
+
+def back_to_clients(update, context):
+    telegram_id = update.message.chat_id
+    clients(update, context)
+    logs(update, f"back to clients menu")
+    logger.info("%s back to clients menu", telegram_id)
+    return STATE_CLIENTS
 
 
 def about(update, context):
@@ -145,23 +217,37 @@ def about(update, context):
 
 
 def feedback(update, context):
-    try:
-        update.message.reply_text(feedback_text,
-                                  reply_markup=button_back)
-        return STATE_FEEDBACK
-    except Exception as e:
-        print(e)
+    update.message.reply_text(feedback_text,
+                              reply_markup=button_back)
+    telegram_id = update.message.chat_id
+    logs(update, f"feedback section opened by {name_of_user(update)}")
+    logger.info("%s feedback section opened by %s", telegram_id, name_of_user(update))
+    return STATE_FEEDBACK
+
+
+def get_feedback(update, context):
+    feedback_message_from_user = update.message.text
+    telegram_id = update.message.chat_id
+    f = open('feedbacks.txt', 'a')
+    f.write(f"""User:
+    {time.asctime()}
+    Name: {name_of_user(update)};
+    Phone number: {phone_of_user(update)};
+    Telegram_ID: {telegram_id};
+    
+    Message: {feedback_message_from_user}
+    \n\n""")
+    f.close()
+    logs(update, f"{name_of_user(update)} has just sent a feedback")
+    logger.info("%s - %s has just sent a feedback", telegram_id, name_of_user(update))
+    update.message.reply_html(feedback_accepted_text)
 
 
 def for_sponsors(update, context):
     telegram_id = update.message.chat_id
-    name = cursor.execute("""
-    SELECT name 
-    FROM Users 
-    WHERE telegram_id = '{}'
-    """.format(telegram_id)).fetchone()
     update.message.reply_html(for_sponsors_text)
-    logger.info("Sponsors button pressed by %s (%s)", name[0], telegram_id)
+    logs(update, f"""{name_of_user(update)} pressed sposors button""")
+    logger.info("Sponsors button pressed by %s (%s)", name_of_user(update), telegram_id)
 
 
 def promo(update, context):
@@ -176,11 +262,14 @@ def ramadan(update, context):
 
 
 def help_menu(update, context):
-    update.message.reply_text("Otabek, help menuga ham tekst yozvorilik")
+    update.message.reply_text(help_text)
 
 
 def reset(update, context):
+    telegram_id = update.message.chat_id
     update.message.reply_html(reset_text)
+    logs(update, f"""reset for {name_of_user(update)}, ({telegram_id})""")
+    logger.info("reset for %s, (%s)", name_of_user(update), telegram_id)
 
 
 def acd(update, context):
@@ -215,8 +304,23 @@ def main():
                 MessageHandler(Filters.regex('^(' + ID_4 + ')$'), id_4),
                 MessageHandler(Filters.regex('^(' + BACK + ')$'), back_to_menu)
             ],
+            STATE_ID1: [
+              MessageHandler(Filters.regex('^(' + ID1_MALUMOT + ')$'), info),
+              MessageHandler(Filters.regex('^(' + ID1_BUYURTMA + ')$'), order),
+              MessageHandler(Filters.regex('^(' + ID1_MUTAXASSIS + ')$'), contact),
+              MessageHandler(Filters.regex('^(' + ID1_SAXIFALAR + ')$'), social),
+              MessageHandler(Filters.regex('^(' + BACK + ')$'), back_to_clients)
+            ],
+            STATE_ID1_CONTACT: [
+              MessageHandler(Filters.regex('^(' + BACK + ')$'), id_1),
+              MessageHandler(Filters.text, id1_feedback)
+            ],
+            STATE_ID1_ORDER: [
+
+            ],
             STATE_FEEDBACK: [
-                MessageHandler(Filters.regex('^(' + BACK + ')$'), back_to_menu)
+                MessageHandler(Filters.regex('^(' + BACK + ')$'), back_to_menu),
+                MessageHandler(Filters.all, get_feedback)
             ],
             STATE_ABOUT: [
                 MessageHandler(Filters.regex('^(' + BACK + ')$'), back_to_menu)
