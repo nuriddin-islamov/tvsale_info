@@ -1,7 +1,6 @@
 from telegram.files import file
 from configs import *
 from telegram.ext import *
-import pickle
 from urls import *
 from telegram import *
 from lib import *
@@ -11,7 +10,6 @@ import random
 import sqlite3
 from id1.client_id1 import *
 
-
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
@@ -19,11 +17,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 STATE_SIGNUP, STATE_USER, STATE_CLIENTS, STATE_FEEDBACK, STATE_ABOUT, STATE_PROMO, \
-    STATE_ID1, STATE_ID1_CONTACT, STATE_ID1_ORDER = range(9)
+ STATE_ID1, STATE_ID1_CONTACT, STATE_ID1_ORDER = range(9)
 
 conn = sqlite3.connect(database_path, check_same_thread=False)
 cursor = conn.cursor()
 
+# admin buttons
+BTN_MAIL, GET_STATS, BACK_TO_ADMIN_MENU, BTN_BACK_TO_USER = (
+    'start mailing', 'get stats', 'back to menu', 'back to user'
+)
+# main menu buttons
 BTN_CLIENTS, BTN_ABOUT, BTN_FEEDBACK, BTN_FOR_SPONSORS, BTN_PROMO, BTN_RAMADAN = (
     "🛍 Маҳсулот ва хизматлар", "ℹ️ Биз ҳақимизда", "💬 Алоқа учун", "🤝 Ҳамкорлик учун", "💝 Промо-кодлар", "Ramazon"
 )
@@ -43,13 +46,6 @@ button_back = ReplyKeyboardMarkup([
 ], resize_keyboard=True)
 
 
-# def logs(update):
-#     chat_id = update.message.chat_id
-#     logger.info()
-#     f = open('logs.txt', 'a')
-#     f.write(f'User')
-
-
 # Save logs into logs.txt file
 def logs(update, message):
     telegram_id = update.message.chat_id
@@ -58,7 +54,7 @@ def logs(update, message):
     f.close()
 
 
-# Select name of any user from database
+# Select name of current user from database
 def name_of_user(update):
     telegram_id = update.message.chat_id
     name = cursor.execute("""
@@ -69,7 +65,7 @@ def name_of_user(update):
     return name[0]
 
 
-# Select phone number of any user from database
+# Select phone number of current user from database
 def phone_of_user(update):
     telegram_id = update.message.chat_id
     phone = cursor.execute("""
@@ -86,11 +82,11 @@ def start(update, context):
     telegram_id = update.message.chat_id
     update.message.reply_html(greeting_message)
     db_id = cursor.execute("""SELECT ID FROM Users WHERE telegram_id = '{}'""".format(telegram_id)).fetchall()
-
     if len(db_id) == 0:
         logger.info("New user started the bot. Username: %s and F_Name: %s, L_Name: %s", user.username,
                     user.first_name, user.last_name)
         logs(update, f'New user started the bot. Username: {user.username}')
+        time.sleep(0.99)
         update.message.reply_html(user_name)
         return STATE_SIGNUP
     else:
@@ -100,10 +96,9 @@ def start(update, context):
         return STATE_USER
 
 
+# start registration for new user
 def register(update, context):
     user = update.message.from_user
-    first_name = user.first_name
-    last_name = user.last_name
     username = user.username
     telegram_id = update.message.chat_id
     users_input = update.message.text
@@ -265,17 +260,84 @@ def help_menu(update, context):
     update.message.reply_text(help_text)
 
 
+# def unknown_command(update, context):
+#     update.message.reply_text("""Unknown command. Please choose proper command.
+#
+# /reset to reset the bot""")
+
+
+def quit(update, context):
+    update.message.reply_html("""
+/user - continue as a user
+/root - continue as an admin
+    """, reply_markup=ReplyKeyboardRemove())
+    return ConversationHandler.END
+
+
+# ----------------------- ADMIN CONFIGURATIONS START HERE --------------------- #
+
+
+STATE_ADMIN, STATE_PASSWORD, MAILING = range(3)
+
+
+def admin_sign_in(update, context):
+    telegram_id = update.message.chat_id
+    if telegram_id == 361516746 or 1025864881:
+        update.message.reply_html('Enter password:', reply_markup=ReplyKeyboardRemove())
+        return STATE_PASSWORD
+    else:
+        update.message.reply_html("Бу бўлим фақат админ учун 🚫")
+        return STATE_USER
+
+
+def check_password(update, context):
+    password = update.message.text
+    if password == 'nuriddin':
+        update.message.reply_html("<b>Successful!</b>")
+        admin_panel(update, context)
+        return STATE_ADMIN
+    else:
+        update.message.reply_html("Try again...")
+
+
+def admin_panel(update, context):
+    update.message.reply_text('Welcome, boss!', reply_markup=ReplyKeyboardMarkup([
+        [BTN_MAIL, GET_STATS], [BACK_TO_ADMIN_MENU], [BTN_BACK_TO_USER]],
+        resize_keyboard=True))
+    return STATE_ADMIN
+
+
+def mailing_menu(update, context):
+    update.message.reply_text('''Send me a message and I will send it back to you.
+In real cases, I will send your message to everyone subscribed to me.
+
+Don't forget I am a bot.''', reply_markup=ReplyKeyboardMarkup([
+        ['Back']
+    ], resize_keyboard=True))
+    return MAILING
+
+
+def send_mailing(update, context):
+    message = update.message.text
+    telegram_id = update.message.chat_id
+    users = cursor.execute("""SELECT * FROM Users WHERE phone_number IN (998338789907, 998930086642) 
+    """).fetchall()
+    context.bot.send_message(chat_id=telegram_id,
+                             text=message)
+
+
+def back_to_user(update, context):
+    update.message.reply_html('<i>Loading...</i>')
+    time.sleep(0.5)
+    main_menu(update, context)
+# ----------------------- ADMIN CONFIGURATIONS END HERE --------------------- #
+
+
 def reset(update, context):
     telegram_id = update.message.chat_id
-    update.message.reply_html(reset_text)
+    update.message.reply_html(reset_text, reply_markup=ReplyKeyboardRemove())
     logs(update, f"""reset for {name_of_user(update)}, ({telegram_id})""")
     logger.info("reset for %s, (%s)", name_of_user(update), telegram_id)
-
-
-def acd(update, context):
-    user_id = update.message.chat_id
-    context.bot.send_chat_action(chat_id=user_id, action=ChatAction.TYPING)
-    context.bot.send_document(chat_id=user_id, document=commercial)
 
 
 def main():
@@ -283,7 +345,10 @@ def main():
     dispatcher = updater.dispatcher
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start, run_async=True)],
+        entry_points=[CommandHandler('start', start, run_async=True),
+                      CommandHandler('user', start, run_async=True),
+                      # CommandHandler('reset', main_menu, run_async=True)
+                      ],
         states={
             STATE_SIGNUP: [
                 MessageHandler(Filters.text, register, run_async=True),
@@ -294,7 +359,8 @@ def main():
                 MessageHandler(Filters.regex('^(' + BTN_ABOUT + ')$'), about),
                 MessageHandler(Filters.regex('^(' + BTN_FEEDBACK + ')$'), feedback),
                 MessageHandler(Filters.regex('^(' + BTN_FOR_SPONSORS + ')$'), for_sponsors),
-                MessageHandler(Filters.regex('^(' + BTN_PROMO + ')$'), promo),
+                MessageHandler(Filters.regex('^(' + BTN_PROMO + ')$'), promo)
+
                 # MessageHandler(Filters.regex('^(' + BTN_RAMADAN + ')$'), ramadan)
             ],
             STATE_CLIENTS: [
@@ -305,15 +371,15 @@ def main():
                 MessageHandler(Filters.regex('^(' + BACK + ')$'), back_to_menu)
             ],
             STATE_ID1: [
-              MessageHandler(Filters.regex('^(' + ID1_MALUMOT + ')$'), info),
-              MessageHandler(Filters.regex('^(' + ID1_BUYURTMA + ')$'), order),
-              MessageHandler(Filters.regex('^(' + ID1_MUTAXASSIS + ')$'), contact),
-              MessageHandler(Filters.regex('^(' + ID1_SAXIFALAR + ')$'), social),
-              MessageHandler(Filters.regex('^(' + BACK + ')$'), back_to_clients)
+                MessageHandler(Filters.regex('^(' + ID1_MALUMOT + ')$'), info),
+                MessageHandler(Filters.regex('^(' + ID1_BUYURTMA + ')$'), order),
+                MessageHandler(Filters.regex('^(' + ID1_MUTAXASSIS + ')$'), contact),
+                MessageHandler(Filters.regex('^(' + ID1_SAXIFALAR + ')$'), social),
+                MessageHandler(Filters.regex('^(' + BACK + ')$'), back_to_clients)
             ],
             STATE_ID1_CONTACT: [
-              MessageHandler(Filters.regex('^(' + BACK + ')$'), id_1),
-              MessageHandler(Filters.text, id1_feedback)
+                MessageHandler(Filters.regex('^(' + BACK + ')$'), id_1),
+                MessageHandler(Filters.text, id1_feedback)
             ],
             STATE_ID1_ORDER: [
 
@@ -327,19 +393,45 @@ def main():
             ],
             STATE_PROMO: [
                 MessageHandler(Filters.regex('^(' + BACK + ')$'), back_to_menu)
-            ],
+            ]
         },
         fallbacks=[CommandHandler('menu', clients),
                    CommandHandler('start', main_menu),
                    CommandHandler('help', help_menu),
+                   CommandHandler('quit', quit),
                    MessageHandler(Filters.all, main_menu)]
     )
+    root_handler = ConversationHandler(
+        entry_points=[CommandHandler('root', admin_sign_in)],
+        states={
+            # ------------- ADMIN STATES ------------- #
+            STATE_PASSWORD: [
+                MessageHandler(Filters.text, check_password)
+            ],
+            STATE_ADMIN: [
+                MessageHandler(Filters.regex('^(' + BTN_MAIL + ')$'), mailing_menu),
+                MessageHandler(Filters.regex('^(' + BTN_BACK_TO_USER + ')$'), back_to_user)
+
+            ],
+            MAILING: [
+                MessageHandler(Filters.regex('^(' + 'Back' + ')$'), admin_panel),
+                MessageHandler(Filters.text, send_mailing)
+
+            ]
+
+        },
+        fallbacks=[CommandHandler('quit', quit),
+                   MessageHandler(Filters.all, admin_panel),
+                   ]
+    )
+
     reset_handler = ConversationHandler(
         entry_points=[MessageHandler(Filters.all, reset, run_async=True)],
         states={},
         fallbacks=[conv_handler]
     )
 
+    dispatcher.add_handler(root_handler)
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(reset_handler)
 
