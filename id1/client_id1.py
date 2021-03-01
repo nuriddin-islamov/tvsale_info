@@ -4,7 +4,7 @@ from telegram.ext import *
 from telegram import *
 
 ID1_MALUMOT, ID1_BUYURTMA, ID1_MUTAXASSIS, ID1_SAXIFALAR = (
-    '📃 Маълумот олиш', '📥 Буюртма бериш', '🗯 Мутаҳассис билан боғланиш', '📲 Ижтимоий тармоқдаги саҳифалар'
+    '📃 Маълумот олиш', '📥 Буюртма бериш', '🗯 Мутаҳассис билан боғланиш', '📲 Ижтимоий тармоқлар'
 )
 buttons_id1 = ReplyKeyboardMarkup([
     [ID1_MALUMOT, ID1_BUYURTMA], [ID1_MUTAXASSIS, ID1_SAXIFALAR], [BACK]
@@ -41,7 +41,7 @@ def id1_feedback(update, message):
     Сообщение: {msg}
     \n\n""")
     f.close()
-    update.message.reply_html("<b>Rahmat</b> Qabul qildik... Qoganini Otabek, yozing, pls")
+    update.message.reply_html(accepted_id1.format(name_of_user(update)))
 
 
 def order(update, context):

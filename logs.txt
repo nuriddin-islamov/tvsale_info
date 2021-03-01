@@ -1,0 +1,15 @@
+Mon Mar  1 18:10:53 2021 - 361516746 - User continued using bot 
+Mon Mar  1 18:10:55 2021 - 361516746 - main menu opened by Nuriddin Islamov 
+Mon Mar  1 18:10:57 2021 - 361516746 - clients menu opened by Nuriddin Islamov 
+Mon Mar  1 18:10:59 2021 - 361516746 - main menu opened by Nuriddin Islamov 
+Mon Mar  1 18:10:59 2021 - 361516746 - back to main menu 
+Mon Mar  1 18:11:13 2021 - 361516746 - User continued using bot 
+Mon Mar  1 18:11:14 2021 - 361516746 - main menu opened by Nuriddin Islamov 
+Mon Mar  1 18:11:16 2021 - 361516746 - Nuriddin Islamov pressed sposors button 
+Mon Mar  1 18:11:19 2021 - 361516746 - main menu opened by Nuriddin Islamov 
+Mon Mar  1 18:11:19 2021 - 361516746 - back to main menu 
+Mon Mar  1 18:11:23 2021 - 361516746 - main menu opened by Nuriddin Islamov 
+Mon Mar  1 18:11:23 2021 - 361516746 - back to main menu 
+Mon Mar  1 18:11:24 2021 - 361516746 - feedback section opened by Nuriddin Islamov 
+Mon Mar  1 18:11:26 2021 - 361516746 - main menu opened by Nuriddin Islamov 
+Mon Mar  1 18:11:26 2021 - 361516746 - back to main menu 
