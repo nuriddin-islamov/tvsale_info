@@ -34,11 +34,12 @@ main_buttons = ReplyKeyboardMarkup([
     [BTN_CLIENTS], [BTN_FOR_SPONSORS, BTN_PROMO], [BTN_ABOUT, BTN_FEEDBACK]
 ], resize_keyboard=True)
 
-ID_1, ID_2, ID_3, ID_4, BACK = (
-    '🧬 Лактовита', '♻️ Массажёр', '🏥 «Real Medical» тиббиёт маркази', '🔥 Газ фильтр', '⬅️ Орқага'
+ID_1, ID_2, ID_3, ID_4, ID_5, ID_6, BACK = (
+    '🧬 Лактовита', '♻️ Массажёр', '🏥 «Real Medical» тиббиёт маркази', '🔥 Газ фильтр', '🧽 Гилам ювиш',
+    '🎨 ДекоАрт','⬅️ Орқага'
 )
 client_buttons = ReplyKeyboardMarkup([
-    [ID_1, ID_2], [ID_3, ID_4], [BACK]
+    [ID_1, ID_2], [ID_3, ID_4], [ID_5, ID_6], [BACK]
 ], resize_keyboard=True)
 
 button_back = ReplyKeyboardMarkup([
@@ -222,7 +223,7 @@ def clients(update, context):
 
 def id_1(update, context):
     chat_id = update.message.chat_id
-    update.message.reply_photo(lactovita_pic, caption='''<b>«Lactovita» шифобахш маҳсулоти</b>''',
+    update.message.reply_photo(id1_pic, caption='''<b>«Lactovita» шифобахш маҳсулоти</b>''',
                                parse_mode='HTML', reply_markup=buttons_id1)
     telegram_id = update.message.chat_id
     logs(update, f"id_1 menu opened")
@@ -231,7 +232,7 @@ def id_1(update, context):
 
 
 def id_2(update, context):
-    update.message.reply_photo(massajor_pic, caption='''<b>«VEST BRAUN SHOP» массажёрлари</b>
+    update.message.reply_photo(id2_pic, caption='''<b>«VEST BRAUN SHOP» массажёрлари</b>
 
 ☎️ Телефон рақамлар:
 • 70-983-28-83''', parse_mode='HTML')
@@ -241,7 +242,7 @@ def id_2(update, context):
 
 
 def id_3(update, context):
-    update.message.reply_photo(real_medical_pic, caption='''<b>«Real Medical» тиббиёт маркази</b>
+    update.message.reply_photo(id3_pic, caption='''<b>«Real Medical» тиббиёт маркази</b>
 
 ☎️ Телефон рақамлар:
 • 97-241-03-03
@@ -252,13 +253,38 @@ def id_3(update, context):
 
 
 def id_4(update, context):
-    update.message.reply_photo(gazfiltr_pic, caption='''<b>«Safety» газ фильтрлари</b>
+    update.message.reply_photo(id4_pic, caption='''<b>«Safety» газ фильтрлари</b>
 
 ☎️ Телефон рақамлар:
 • 71-200-48-88''', parse_mode='HTML')
     telegram_id = update.message.chat_id
     logs(update, f"id_4 pressed")
     logger.info("%s id_4 pressed", telegram_id)
+
+
+def id_5(update, context):
+    telegram_id = update.message.chat_id
+    update.message.reply_photo(id5_pic, caption='''<b>«Чистый Дом» гилам ювиш фабрикаси</b>
+    
+☎️ Телефон рақамлар:
+• 97-344-61-61
+• 99-807-61-61''', parse_mode='HTML')
+    logs(update, f"id_5 pressed")
+    logger.info("%s id_5 pressed", telegram_id)
+
+
+def id_6(update, context):
+    telegram_id = update.message.chat_id
+    update.message.reply_photo(id6_pic, caption='''<b>“DEKO`ART”</b>
+
+Ўзбекистонда ташқи ва ички юзалар учун
+энг замонавий, юқори сифатли бўёқ, девор қоплама маҳсулолари мажмуасидир.
+    
+☎️ Телефон рақамлар:
+• 99-855-26-66
+• 71-230-18-66''', parse_mode='HTML')
+    logs(update, f'id_6 pressed')
+    logger.info("%s id_6 pressed", telegram_id)
 
 
 def back_to_menu(update, context):
@@ -498,10 +524,12 @@ def main():
                 # MessageHandler(Filters.regex('^(' + BTN_RAMADAN + ')$'), ramadan)
             ],
             STATE_CLIENTS: [
-                MessageHandler(Filters.regex('^(' + ID_1 + ')$'), id_1),
-                MessageHandler(Filters.regex('^(' + ID_2 + ')$'), id_2),
-                MessageHandler(Filters.regex('^(' + ID_3 + ')$'), id_3),
-                MessageHandler(Filters.regex('^(' + ID_4 + ')$'), id_4),
+                MessageHandler(Filters.regex(ID_1), id_1),
+                MessageHandler(Filters.regex(ID_2), id_2),
+                MessageHandler(Filters.regex(ID_3), id_3),
+                MessageHandler(Filters.regex(ID_4), id_4),
+                MessageHandler(Filters.regex(ID_5), id_5),
+                MessageHandler(Filters.regex(ID_6), id_6),
                 MessageHandler(Filters.regex('^(' + BACK + ')$'), back_to_menu)
             ],
             STATE_ID1: [
